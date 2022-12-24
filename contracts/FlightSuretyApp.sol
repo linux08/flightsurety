@@ -33,6 +33,7 @@ contract FlightSuretyApp {
         string name;
     }
     mapping(address => Airline) public airlines;
+    bool private operational = true;
 
     struct Flight {
         bool isRegistered;
@@ -84,8 +85,22 @@ contract FlightSuretyApp {
     /*                                       UTILITY FUNCTIONS                                  */
     /********************************************************************************************/
 
-    function isOperational() public pure returns (bool) {
-        return true; // Modify to call data contract's status
+    /**
+     * @dev function to authorize caller
+     *
+     * @return A bool that is the current operating status
+     */
+    function isOperational() public view returns (bool) {
+        return operational;
+    }
+
+    /**
+     * @dev Sets contract operations on/off
+     *
+     * When operational mode is disabled, all write transactions except for this one will fail
+     */
+    function setOperatingStatus(bool mode) external requireContractOwner {
+        operational = mode;
     }
 
     /********************************************************************************************/

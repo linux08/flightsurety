@@ -13,7 +13,6 @@ contract FlightSuretyData is FlightSuretyApp {
     /********************************************************************************************/
 
     address private contractOwner; // Account used to deploy contract
-    bool private operational = true; // Blocks all state changes throughout the contract if false
 
     struct Airline {
         bool isRegistered;
@@ -27,7 +26,7 @@ contract FlightSuretyData is FlightSuretyApp {
     uint256 public constant INSURANCE_POLICY_FEE = 1 ether;
     uint256 public constant AIRLINE_FUNDING_FEE = 10 ether;
 
-    mapping(address => Airline) public airlines; // mapping for storing airlines
+    mapping(address => Airline) private airlines; // mapping for storing airlines
     mapping(address => uint256) public funds; // mapping for storing funds
     mapping(address => bool) authorizedContracts; // mapping for storing authorized contract
 
@@ -41,9 +40,10 @@ contract FlightSuretyData is FlightSuretyApp {
      * Register first airline on contract deployment
      */
     constructor(address airline) {
-        authorizeCaller(msg.sender);
         contractOwner = msg.sender;
         airlines[airline].isRegistered = true;
+        airlines[airline].airlineOwner = msg.sender;
+        airlines[airline].name = "First airline";
         registeredAirlineCount += 1;
     }
 
@@ -53,24 +53,6 @@ contract FlightSuretyData is FlightSuretyApp {
 
     // Modifiers help avoid duplication of code. They are typically used to validate something
     // before a function is allowed to be executed.
-
-    /**
-     * @dev Modifier that requires the "operational" boolean variable to be "true"
-     *      This is used on all state changing functions to pause the contract in
-     *      the event there is an issue that needs to be fixed
-     */
-    modifier requireIsOperational() {
-        require(operational, "Contract is currently not operational");
-        _; // All modifiers require an "_" which indicates where the function body will be added
-    }
-
-    /**
-     * @dev Modifier that requires the "ContractOwner" account to be the function caller
-     */
-    modifier requireContractOwner() {
-        require(msg.sender == contractOwner, "Caller is not contract owner");
-        _;
-    }
 
     modifier allowOnlyRegisteredAirline(address airline) {
         require(
@@ -89,7 +71,7 @@ contract FlightSuretyData is FlightSuretyApp {
     }
 
     modifier checkIfAirlineHasFunds(address airline) {
-        require(funds[address] >= AIRLINE_FUNDING_FEE, "Insufficient fund");
+        require(funds[airline] >= AIRLINE_FUNDING_FEE, "Insufficient fund");
         _;
     }
 
@@ -125,24 +107,6 @@ contract FlightSuretyData is FlightSuretyApp {
     }
 
     /**
-     * @dev function to authorize caller
-     *
-     * @return A bool that is the current operating status
-     */
-    function isOperational() public view returns (bool) {
-        return operational;
-    }
-
-    /**
-     * @dev Get operating status of contract
-     *
-     * @return A bool that is the current operating status
-     */
-    function isOperational() public view returns (bool) {
-        return operational;
-    }
-
-    /**
      * @dev Get authorization  status of contract
      *
      * @return A bool that is the current operating status
@@ -152,14 +116,6 @@ contract FlightSuretyData is FlightSuretyApp {
         return authorizedContracts[contractAddress];
     }
 
-    /**
-     * @dev Sets contract operations on/off
-     *
-     * When operational mode is disabled, all write transactions except for this one will fail
-     */
-    function setOperatingStatus(bool mode) external requireContractOwner {
-        operational = mode;
-    }
 
     /********************************************************************************************/
     /*                                     SMART CONTRACT FUNCTIONS                             */
@@ -177,7 +133,6 @@ contract FlightSuretyData is FlightSuretyApp {
         isCallerAuthorised
         checkIfAirlineHasFunds(airline)
     {
-
         if (registeredAirlineCount >= 4) {
             // Check to ensure that an airline doesn't vote multiple times
             for (uint256 i = 0; i < airlines[airline].voters.length; i++) {
@@ -190,7 +145,7 @@ contract FlightSuretyData is FlightSuretyApp {
             airlines[airline].voters.push(msg.sender);
             if (
                 // Registration of fifth and subsequent airlines requires multi-party consensus of 50% of registered airlines
-                airlines[airline].approvals.length >=
+                airlines[airline].voters.length >=
                 registeredAirlineCount.div(2)
             ) {
                 airlines[airline].isRegistered = true;
@@ -225,14 +180,6 @@ contract FlightSuretyData is FlightSuretyApp {
      *
      */
     function fund() public payable {}
-
-    function getFlightKey(
-        address airline,
-        string memory flight,
-        uint256 timestamp
-    ) internal pure returns (bytes32) {
-        return keccak256(abi.encodePacked(airline, flight, timestamp));
-    }
 
     /**
      * @dev Fallback function for funding smart contract.
