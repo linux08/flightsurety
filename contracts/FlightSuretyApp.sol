@@ -27,6 +27,13 @@ contract FlightSuretyApp {
 
     address private contractOwner; // Account used to deploy contract
 
+    struct Airline {
+        bool isRegistered;
+        address airlineOwner;
+        string name;
+    }
+    mapping(address => Airline) public airlines;
+
     struct Flight {
         bool isRegistered;
         uint8 statusCode;
@@ -84,6 +91,19 @@ contract FlightSuretyApp {
     /********************************************************************************************/
     /*                                     SMART CONTRACT FUNCTIONS                             */
     /********************************************************************************************/
+
+    /**
+     * @dev Add an airline already registered
+     *
+     */
+
+    function checkAirlineStatus(address userAddress)
+        external
+        view
+        returns (bool)
+    {
+        return airlines[userAddress].isRegistered;
+    }
 
     /**
      * @dev Add an airline to the registration queue
