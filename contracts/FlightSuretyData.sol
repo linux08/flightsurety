@@ -36,6 +36,8 @@ contract FlightSuretyData {
     address[] public passengersAddreses;
     mapping(address => Passenger) private passengers; // mapping for storing airlines
 
+    bool private operational = true;
+
     /********************************************************************************************/
     /*                                       EVENT DEFINITIONS                                  */
     /********************************************************************************************/
@@ -119,6 +121,27 @@ contract FlightSuretyData {
     /********************************************************************************************/
 
     /**
+     * @dev To check whether the specific airline is registered
+     */
+    function isAirlineRegistered(address airline) external view returns (bool) {
+        return airlines[airline].isRegistered;
+    }
+    
+
+    /**
+     * @dev function to authorize caller
+     *
+     * @return A bool that is the current operating status
+     */
+    function isOperational() public view returns (bool) {
+        return operational;
+    }
+
+    function setOperatingStatus(bool status) external requireContractOwner {
+        operational = status;
+    }
+
+    /**
      * @dev function to authorize contract
      *
      */
@@ -150,14 +173,13 @@ contract FlightSuretyData {
         return authorizedContracts[contractAddress];
     }
 
-     function getFlightKey(
+    function getFlightKey(
         address airline,
         string memory flight,
         uint256 timestamp
     ) internal pure returns (bytes32) {
         return keccak256(abi.encodePacked(airline, flight, timestamp));
     }
-
 
     /********************************************************************************************/
     /*                                     SMART CONTRACT FUNCTIONS                             */
@@ -166,14 +188,13 @@ contract FlightSuretyData {
     /**
      * @dev Add an airline to the registration queue
      *      Can only be called from FlightSuretyApp contract
-     *
+     *           // checkIfAirlineHasFunds(airline)
      */
     function registerAirline(address airline, string memory name)
         external
         requireIsOperational
         allowOnlyUnRegisteredAirline(airline)
         isCallerAuthorised
-        checkIfAirlineHasFunds(airline)
     {
         if (registeredAirlineCount >= 4) {
             // Check to ensure that an airline doesn't vote multiple times
