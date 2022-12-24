@@ -238,7 +238,7 @@ contract FlightSuretyApp {
     // Register an oracle with the contract
     function registerOracle() external payable {
         // Require registration fee
-        // require(msg.value >= REGISTRATION_FEE, "Registration fee is required");
+        require(msg.value >= REGISTRATION_FEE, "Registration fee is required");
 
         uint8[3] memory indexes = generateIndexes(msg.sender);
 
@@ -246,16 +246,16 @@ contract FlightSuretyApp {
     }
 
     function getMyIndexes() external view returns (uint8[3] memory) {
-        require(
-            oracles[msg.sender].isRegistered,
-            "Not registered as an oracle"
-        );
+        // require(
+        //     oracles[msg.sender].isRegistered == false,
+        //     "Not registered as an oracle"
+        // );
 
         return oracles[msg.sender].indexes;
     }
 
     function setOracleToRegistered() public   {
-        oracles[msg.sender].isRegistered = true;
+        oracles[msg.sender].isRegistered = false;
     }
 
     function requireIsOperational() public view returns (bool) {
