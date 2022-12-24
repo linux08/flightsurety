@@ -7,12 +7,14 @@ pragma solidity >=0.8.17;
 
 import "../node_modules/@openzeppelin/contracts/utils/math/SafeMath.sol";
 
+// import "./FlightSuretyData.sol";
+
 /************************************************** */
 /* FlightSurety Smart Contract                      */
 /************************************************** */
 contract FlightSuretyApp {
     using SafeMath for uint256; // Allow SafeMath functions to be called for all uint256 types (similar to "prototype" in Javascript)
-
+    FlightSuretyData flightSuretyData;
     /********************************************************************************************/
     /*                                       DATA VARIABLES                                     */
     /********************************************************************************************/
@@ -26,6 +28,15 @@ contract FlightSuretyApp {
     uint8 private constant STATUS_CODE_LATE_OTHER = 50;
 
     address private contractOwner; // Account used to deploy contract
+    mapping(address => bool) authorizedContracts; // mapping for storing authorized contract
+
+    struct Airline {
+        bool isRegistered;
+        address airlineOwner;
+        string name;
+    }
+    mapping(address => Airline) public airlines;
+    bool private operational = true;
 
     struct Flight {
         bool isRegistered;
@@ -34,7 +45,7 @@ contract FlightSuretyApp {
         address airline;
     }
     mapping(bytes32 => Flight) private flights;
-
+    bytes32[] public registeredFlight;
     /********************************************************************************************/
     /*                                       FUNCTION MODIFIERS                                 */
     /********************************************************************************************/
@@ -61,6 +72,19 @@ contract FlightSuretyApp {
         _;
     }
 
+    modifier checkIfFlightisRegistered(bytes32 flightKey) {
+        require(
+            !flights[flightKey].isRegistered,
+            "Flight is already registered!"
+        );
+        _;
+    }
+
+    modifier isCallerAuthorised() {
+        require(authorizedContracts[msg.sender], "Caller is not authorised");
+        _;
+    }
+
     /********************************************************************************************/
     /*                                       CONSTRUCTOR                                        */
     /********************************************************************************************/
@@ -69,21 +93,49 @@ contract FlightSuretyApp {
      * @dev Contract constructor
      *
      */
-    constructor() {
+    constructor(address dataContractAddress) {
         contractOwner = msg.sender;
+         flightSuretyData = FlightSuretyData(dataContractAddress);
     }
 
     /********************************************************************************************/
     /*                                       UTILITY FUNCTIONS                                  */
     /********************************************************************************************/
 
-    function isOperational() public pure returns (bool) {
-        return true; // Modify to call data contract's status
+    /**
+     * @dev function to authorize caller
+     *
+     * @return A bool that is the current operating status
+     */
+    function isOperational() public view returns (bool) {
+        return operational;
+    }
+
+    /**
+     * @dev Sets contract operations on/off
+     *
+     * When operational mode is disabled, all write transactions except for this one will fail
+     */
+    function setOperatingStatus(bool mode) external requireContractOwner {
+        operational = mode;
     }
 
     /********************************************************************************************/
     /*                                     SMART CONTRACT FUNCTIONS                             */
     /********************************************************************************************/
+
+    /**
+     * @dev Add an airline already registered
+     *
+     */
+
+    function checkAirlineStatus(address userAddress)
+        external
+        view
+        returns (bool)
+    {
+        return airlines[userAddress].isRegistered;
+    }
 
     /**
      * @dev Add an airline to the registration queue
@@ -101,7 +153,22 @@ contract FlightSuretyApp {
      * @dev Register a future flight for insuring.
      *
      */
-    function registerFlight() external pure {}
+    function registerFlight(
+        // string memory name,
+        string memory flight,
+        uint256 timestamp
+    )
+        external
+        checkIfFlightisRegistered(getFlightKey(msg.sender, flight, timestamp))
+    {
+        bytes32 flightKey = getFlightKey(msg.sender, flight, timestamp);
+
+        flights[flightKey].isRegistered = true;
+        flights[flightKey].statusCode = STATUS_CODE_UNKNOWN;
+        flights[flightKey].updatedTimestamp = timestamp;
+        flights[flightKey].airline = msg.sender;
+        registeredFlight.push(flightKey);
+    }
 
     /**
      * @dev Called after oracle has updated flight status
@@ -112,7 +179,13 @@ contract FlightSuretyApp {
         string memory flight,
         uint256 timestamp,
         uint8 statusCode
-    ) internal pure {}
+    ) internal requireIsOperational {
+        bytes32 flightKey = getFlightKey(airline, flight, timestamp);
+        if (statusCode == STATUS_CODE_LATE_AIRLINE) {
+            flightSuretyData.creditInsurees(flight, timestamp, airline);
+        }
+        flights[flightKey].statusCode = statusCode;
+    }
 
     // Generate a request for oracles to fetch flight information
     function fetchFlightStatus(
@@ -202,6 +275,22 @@ contract FlightSuretyApp {
 
         oracles[msg.sender] = Oracle({isRegistered: true, indexes: indexes});
     }
+
+    // /**
+    //  *  @dev Credits payouts to insurees
+    //  */
+    // function creditInsurees(
+    //     string calldata flight,
+    //     uint256 timestamp,
+    //     address airline
+    // ) external requireIsOperational isCallerAuthorised {
+    //     bytes32 flightKey = getFlightKey(airline, flight, timestamp);
+
+    //     for (uint256 i = 0; i <= passengersAddreses.length; i++) {
+    //         address pAddress = passengersAddreses[i];
+    //         passengers[pAddress].insuredFlights[uint256(flightKey)] = 0;
+    //     }
+    // }
 
     function getMyIndexes() external view returns (uint8[3] memory) {
         require(
@@ -303,4 +392,12 @@ contract FlightSuretyApp {
     }
 
     // endregion
+}
+
+contract FlightSuretyData {
+    function creditInsurees(
+        string calldata flight,
+        uint256 timestamp,
+        address airline
+    ) external;
 }
