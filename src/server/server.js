@@ -13,7 +13,7 @@ flightSuretyApp.events.OracleRequest(
     fromBlock: 0,
   },
   function(error, event) {
-    if (error) console.log("eree", error);
+    if (error) console.log(error);
     console.log(event);
   }
 );
@@ -50,7 +50,7 @@ REGISTRATION_FEE()
       {
         fromBlock: await web3.eth.getBlockNumber(),
       },
-      (err, event) => submitResponse(err, event)
+      (err, event) => subscribeToEvent(err, event)
     );
 
     // Subscribe to OracleRequest event and respond with all oracles available
@@ -65,9 +65,9 @@ REGISTRATION_FEE()
 const subscribeToEvent = async (error, event) => {
   let { airline, flight, flightTimestamp, index } = event.returnValues;
 
-  for (let i = 0; i < N_ORACLES; i++) {
-     let rand = Math.floor(Math.random() * 10);
-     let account = web3.utils.toChecksumAddress(web3.eth.accounts[rand]);
+  for (let i = 0; i < 20; i++) {
+    let rand = Math.floor(Math.random() * 10);
+    let account = web3.utils.toChecksumAddress(web3.eth.accounts[rand]);
     let indices = await getMyIndexes().call({
       from: account,
     });
