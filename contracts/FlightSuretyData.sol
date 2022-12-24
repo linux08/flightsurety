@@ -3,7 +3,7 @@ pragma solidity ^0.8.17;
 
 import "../node_modules/@openzeppelin/contracts/utils/math/SafeMath.sol";
 
-contract FlightSuretyApp {
+contract FlightSuretyData {
     using SafeMath for uint256;
 
     /********************************************************************************************/
@@ -45,8 +45,9 @@ contract FlightSuretyApp {
      * The deploying account becomes contractOwner
      * Register first airline on contract deployment
      */
-    constructor(address airline) {
+    constructor() {
         contractOwner = msg.sender;
+        address airline = msg.sender;
         airlines[airline].isRegistered = true;
         airlines[airline].airlineOwner = msg.sender;
         airlines[airline].name = "First airline";

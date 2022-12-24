@@ -14,7 +14,7 @@ import "../node_modules/@openzeppelin/contracts/utils/math/SafeMath.sol";
 /************************************************** */
 contract FlightSuretyApp {
     using SafeMath for uint256; // Allow SafeMath functions to be called for all uint256 types (similar to "prototype" in Javascript)
-    FlightSuretyData flightSuretyData;
+    IFlightSuretyData flightSuretyData;
     /********************************************************************************************/
     /*                                       DATA VARIABLES                                     */
     /********************************************************************************************/
@@ -95,7 +95,7 @@ contract FlightSuretyApp {
      */
     constructor(address dataContractAddress) {
         contractOwner = msg.sender;
-         flightSuretyData = FlightSuretyData(dataContractAddress);
+         flightSuretyData = IFlightSuretyData(dataContractAddress);
     }
 
     /********************************************************************************************/
@@ -276,21 +276,7 @@ contract FlightSuretyApp {
         oracles[msg.sender] = Oracle({isRegistered: true, indexes: indexes});
     }
 
-    // /**
-    //  *  @dev Credits payouts to insurees
-    //  */
-    // function creditInsurees(
-    //     string calldata flight,
-    //     uint256 timestamp,
-    //     address airline
-    // ) external requireIsOperational isCallerAuthorised {
-    //     bytes32 flightKey = getFlightKey(airline, flight, timestamp);
-
-    //     for (uint256 i = 0; i <= passengersAddreses.length; i++) {
-    //         address pAddress = passengersAddreses[i];
-    //         passengers[pAddress].insuredFlights[uint256(flightKey)] = 0;
-    //     }
-    // }
+  
 
     function getMyIndexes() external view returns (uint8[3] memory) {
         require(
@@ -394,10 +380,6 @@ contract FlightSuretyApp {
     // endregion
 }
 
-contract FlightSuretyData {
-    function creditInsurees(
-        string calldata flight,
-        uint256 timestamp,
-        address airline
-    ) external;
+interface IFlightSuretyData {
+    function creditInsurees(string calldata flight, uint256 timestamp, address airline ) external ;
 }
