@@ -25,51 +25,61 @@ let {
   registerOracle,
 } = flightSuretyApp.methods;
 
-// Spin up 20+ Oracles at initialization
-let fee = await REGISTRATION_FEE().call();
-for (let i = 0; a < 20; a++) {
-  await registerOracle().send({
-    from: web3.eth.accounts[i],
-    value: fee,
-  });
-   await getMyIndexes().call({
-    from: web3.eth.accounts[i],
-  });
-}
+REGISTRATION_FEE()
+  .call()
+  .then(async (fee) => {
+    for (let i = 0; i < 20; i++) {
+      let rand = Math.floor(Math.random() * 10);
+      let account = web3.utils.toChecksumAddress(web3.eth.accounts[rand]);
+      registerOracle()
+        .send({
+          from: account,
+          value: fee,
+        })
+        .then((resp) => console.log(resp))
+        .catch((err) => console.log(err));
+      getMyIndexes()
+        .call({
+          from: account,
+        })
+        .then((resp) => console.log(resp))
+        .catch((err) => console.log(err));
+    }
 
-flightSuretyApp.events.OracleRequest(
-  {
-    fromBlock: await web3.eth.getBlockNumber(),
-  },
-  (err, event) => submitResponse(err, event)
-);
+    flightSuretyApp.events.OracleRequest(
+      {
+        fromBlock: await web3.eth.getBlockNumber(),
+      },
+      (err, event) => subscribeToEvent(err, event)
+    );
 
-// Subscribe to OracleRequest event and respond with all oracles available
-flightSuretyApp.events.OracleRequest(
-  {
-    fromBlock: await web3.eth.getBlockNumber(),
-  },
-  (err, event) => subscribeToEvent(err, event)
-);
+    // Subscribe to OracleRequest event and respond with all oracles available
+    flightSuretyApp.events.OracleRequest(
+      {
+        fromBlock: await web3.eth.getBlockNumber(),
+      },
+      (err, event) => subscribeToEvent(err, event)
+    );
+  });
 
 const subscribeToEvent = async (error, event) => {
   let { airline, flight, flightTimestamp, index } = event.returnValues;
 
-  for (let a = 0; a < N_ORACLES; a++) {
+  for (let i = 0; i < 20; i++) {
+    let rand = Math.floor(Math.random() * 10);
+    let account = web3.utils.toChecksumAddress(web3.eth.accounts[rand]);
     let indices = await getMyIndexes().call({
-      from: accounts[a],
+      from: account,
     });
     if (indices.includes(index)) {
-      let selection = Math.random() * 4;
+      let selection = Math.floor(Math.random() * 4);
 
       await submitOracleResponse(airline, flight, flightTimestamp, selection).send({
-        from: accounts[i],
+        from: account,
       });
     }
   }
 };
-
-
 
 const app = express();
 app.get("/api", (req, res) => {

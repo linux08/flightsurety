@@ -6,8 +6,7 @@ pragma solidity >=0.8.17;
 // More info: https://www.nccgroup.trust/us/about-us/newsroom-and-events/blog/2018/november/smart-contract-insecurity-bad-arithmetic/
 
 import "../node_modules/@openzeppelin/contracts/utils/math/SafeMath.sol";
-
-// import "./FlightSuretyData.sol";
+import "hardhat/console.sol";
 
 /************************************************** */
 /* FlightSurety Smart Contract                      */
@@ -36,7 +35,6 @@ contract FlightSuretyApp {
         string name;
     }
     mapping(address => Airline) public airlines;
-    bool private operational = true;
 
     struct Flight {
         bool isRegistered;
@@ -52,17 +50,6 @@ contract FlightSuretyApp {
 
     // Modifiers help avoid duplication of code. They are typically used to validate something
     // before a function is allowed to be executed.
-
-    /**
-     * @dev Modifier that requires the "operational" boolean variable to be "true"
-     *      This is used on all state changing functions to pause the contract in
-     *      the event there is an issue that needs to be fixed
-     */
-    modifier requireIsOperational() {
-        // Modify to call data contract's status
-        require(true, "Contract is currently not operational");
-        _; // All modifiers require an "_" which indicates where the function body will be added
-    }
 
     /**
      * @dev Modifier that requires the "ContractOwner" account to be the function caller
@@ -95,30 +82,12 @@ contract FlightSuretyApp {
      */
     constructor(address dataContractAddress) {
         contractOwner = msg.sender;
-         flightSuretyData = IFlightSuretyData(dataContractAddress);
+        flightSuretyData = IFlightSuretyData(dataContractAddress);
     }
 
     /********************************************************************************************/
     /*                                       UTILITY FUNCTIONS                                  */
     /********************************************************************************************/
-
-    /**
-     * @dev function to authorize caller
-     *
-     * @return A bool that is the current operating status
-     */
-    function isOperational() public view returns (bool) {
-        return operational;
-    }
-
-    /**
-     * @dev Sets contract operations on/off
-     *
-     * When operational mode is disabled, all write transactions except for this one will fail
-     */
-    function setOperatingStatus(bool mode) external requireContractOwner {
-        operational = mode;
-    }
 
     /********************************************************************************************/
     /*                                     SMART CONTRACT FUNCTIONS                             */
@@ -141,12 +110,8 @@ contract FlightSuretyApp {
      * @dev Add an airline to the registration queue
      *
      */
-    function registerAirline()
-        external
-        pure
-        returns (bool success, uint256 votes)
-    {
-        return (success, 0);
+    function registerAirline(address airline) external {
+        return flightSuretyData.registerAirline(airline);
     }
 
     /**
@@ -179,7 +144,11 @@ contract FlightSuretyApp {
         string memory flight,
         uint256 timestamp,
         uint8 statusCode
-    ) internal requireIsOperational {
+    ) internal {
+        require(
+            requireIsOperational() == false,
+            "Registration fee is required"
+        );
         bytes32 flightKey = getFlightKey(airline, flight, timestamp);
         if (statusCode == STATUS_CODE_LATE_AIRLINE) {
             flightSuretyData.creditInsurees(flight, timestamp, airline);
@@ -276,15 +245,21 @@ contract FlightSuretyApp {
         oracles[msg.sender] = Oracle({isRegistered: true, indexes: indexes});
     }
 
-  
-
     function getMyIndexes() external view returns (uint8[3] memory) {
-        require(
-            oracles[msg.sender].isRegistered,
-            "Not registered as an oracle"
-        );
+        // require(
+        //     oracles[msg.sender].isRegistered == false,
+        //     "Not registered as an oracle"
+        // );
 
         return oracles[msg.sender].indexes;
+    }
+
+    function setOracleToRegistered() public   {
+        oracles[msg.sender].isRegistered = false;
+    }
+
+    function requireIsOperational() public view returns (bool) {
+        return flightSuretyData.isOperational(); // Modify to call data contract's status
     }
 
     // Called by oracle when a response is available to an outstanding request
@@ -381,5 +356,15 @@ contract FlightSuretyApp {
 }
 
 interface IFlightSuretyData {
-    function creditInsurees(string calldata flight, uint256 timestamp, address airline ) external ;
+    function creditInsurees(
+        string calldata flight,
+        uint256 timestamp,
+        address airline
+    ) external;
+
+    function isOperational() external view returns (bool);
+
+    function setOperatingStatus(bool mode) external;
+
+    function registerAirline(address airline) external;
 }
