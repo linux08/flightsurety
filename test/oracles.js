@@ -1,6 +1,4 @@
 var Test = require("../config/testConfig.js");
-
-//var BigNumber = require('bignumber.js');
 const Web3 = require("web3");
 
 var ether_port = "ws://127.0.0.1:7545";

@@ -13,8 +13,8 @@
 
     <nav class="navbar navbar-expand-md navbar-dark bg-dark fixed-top">
         <a class="navbar-brand" href="#">FlightSurety</a>
-        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarsExampleDefault" aria-controls="navbarsExampleDefault"
-            aria-expanded="false" aria-label="Toggle navigation">
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarsExampleDefault"
+            aria-controls="navbarsExampleDefault" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
         </button>
     </nav>
@@ -24,8 +24,36 @@
         <div id="display-wrapper" class="top-20">
         </div>
         <div class="row top-20">
-            <label class="form">Flight</label> <input type="text" id="flight-number"> <btn class="btn btn-primary" id="submit-oracle">Submit to Oracles</btn>
+            <label class="form">Flight</label> <input type="text" id="flight-number">
+            <btn class="btn btn-primary" id="submit-oracle">Submit to Oracles</btn>
         </div>
+
+        <div class="p-20">
+            <h6 class="text-decoration-underline"> Purchase insurance </h6>
+            <div class="top-20 ">
+                <div class="">
+                    <label class="form ">Airline name</label> <input type="text" id="flight-insnumber">
+                </div>
+                <div class="">
+                    <label class="form  ">Airline address </label> <input type="text" id="flight-insnumber">
+                </div class="w-45">
+                <div class="">
+                    <label class="form  ">Amount of funds </label> <input type="text" id="flight-insnumber">
+                </div>
+                <div class="">
+                    <label class="form ">Flight insurance</label>
+                    <input class="w-50" type="text" placeholder="Flight insurance for no more than 1eth" id="flight-insnumber">
+                </div>
+                <btn class="btn btn-primary" id="purchase-insurance">Purchase insurance</btn>
+            </div>
+        </div>
+
+
+        <div class="row top-20">
+            <label class="form">Flight</label> <input type="text" id="flight-upnumber">
+            <btn class="btn btn-primary" id="flight-status-update">Flight status update</btn>
+        </div>
+
     </main>
 
 </body>

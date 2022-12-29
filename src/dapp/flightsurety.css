@@ -5,7 +5,7 @@ body {
 }
 
 .container {
-    margin-top: 400px;
+    margin-top: 200px;
     background-color: #000;
     opacity: 0.9;
     color: #fff;
@@ -39,4 +39,33 @@ label.form {
 }
 input {
     margin-right: 30px;
+}
+
+.purchase-ins{
+    display: flex;
+    flex-direction: column;
+}
+
+.w-45{
+    width: 45%;
+    height: 40px;
+    padding: 10px;
+}
+
+
+.col {
+    display: flex;
+    flex-direction: column;
+}
+
+.m-50{
+    margin: 15px;
+}
+
+.p-20{
+    padding: 20px;
+}
+
+.m-top30 {
+    margin-top: 80px !important;
 }

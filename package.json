@@ -12,7 +12,7 @@
     "dapp": "webpack-dev-server --mode development --config webpack.config.dapp.js",
     "dapp:prod": "webpack --mode production  --config webpack.config.dapp.js",
     "dev": "lite-server",
-    "test": "truffle test ./test/flightSurety.js",
+    "test": "truffle test ./test/*.js",
     "test-ganache": "TRUFFLE_TEST=true npm run ganache-cli:test",
     "test:gas": "GAS_REPORTER=true npm test",
     "test:coverage": "SOLIDITY_COVERAGE=true npm run ganache-cli:test",

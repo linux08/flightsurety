@@ -18,6 +18,8 @@ To run truffle tests:
 `truffle test ./test/flightSurety.js`
 `truffle test ./test/oracles.js`
 
+Start you ganache, a sample code can be found in `1_start_ganache-cli.sh`
+
 To use the dapp:
 
 `truffle migrate`

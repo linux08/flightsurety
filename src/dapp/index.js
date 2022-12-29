@@ -29,6 +29,36 @@ import "./flightsurety.css";
           ]);
         });
       });
+
+      // purchase insurance
+      DOM.elid("purchase-insurance").addEventListener("click", () => {
+        let flight = DOM.elid("flight-insnumber").value;
+        // Write transaction
+        contract.buyInsurance(flight, (error, result) => {
+          display("Buy", "Buy Insurance", [
+            {
+              label: "Buy insurance",
+              error: error,
+              value: result.flight + " " + result.timestamp,
+            },
+          ]);
+        });
+      });
+
+      // purchase insurance
+      DOM.elid("flight-status-update").addEventListener("click", () => {
+        let flight = DOM.elid("flight-upnumber").value;
+        // Write transaction
+        contract.buyInsurance(flight, (error, result) => {
+          display("Oracles", "flight update", [
+            {
+              label: "Flight update",
+              error: error,
+              value: result.flight + " " + result.timestamp,
+            },
+          ]);
+        });
+      });
     } catch (err) {
       console.log(err);
     }
