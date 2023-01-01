@@ -1,7 +1,7 @@
 {
   "name": "flightsurety",
   "version": "1.0.0",
-  "description": "",
+  "description": "flight surety",
   "directories": {
     "test": "test"
   },
