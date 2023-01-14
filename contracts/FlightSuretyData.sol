@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0
-pragma solidity ^0.8.17;
+pragma solidity 0.8.17;
 
 import "../node_modules/@openzeppelin/contracts/utils/math/SafeMath.sol";
 
@@ -41,6 +41,8 @@ contract FlightSuretyData {
     /********************************************************************************************/
     /*                                       EVENT DEFINITIONS                                  */
     /********************************************************************************************/
+
+    event InsuranceBought(address airline);
 
     /**
      * @dev Constructor
@@ -90,8 +92,9 @@ contract FlightSuretyData {
     }
 
     modifier ensurePassengerHasFunds() {
+        address payable towner = payable(msg.sender);
         require(
-            (address(this).balance > passengers[payable(msg.sender)].balance),
+            (address(this).balance > passengers[towner].balance),
             "Not enough funds"
         );
         _;
@@ -126,7 +129,6 @@ contract FlightSuretyData {
     function isAirlineRegistered(address airline) external view returns (bool) {
         return airlines[airline].isRegistered;
     }
-    
 
     /**
      * @dev function to authorize caller
@@ -190,32 +192,34 @@ contract FlightSuretyData {
      *      Can only be called from FlightSuretyApp contract
      *           // checkIfAirlineHasFunds(airline)
      */
+
+             // requireIsOperational
+        // allowOnlyUnRegisteredAirline(airline)
+        // isCallerAuthorised
     function registerAirline(address airline, string memory name)
         external
-        requireIsOperational
-        allowOnlyUnRegisteredAirline(airline)
-        isCallerAuthorised
+
     {
         if (registeredAirlineCount >= 4) {
             // Check to ensure that an airline doesn't vote multiple times
-            for (uint256 i = 0; i < airlines[airline].voters.length; i++) {
-                require(
-                    airlines[airline].voters[i] != msg.sender,
-                    "Current Airline already approved"
-                );
-            }
+            // for (uint256 i = 0; i < airlines[airline].voters.length; i++) {
+            //     require(
+            //         airlines[airline].voters[i] != msg.sender,
+            //         "Current Airline already approved"
+            //     );
+            // }
 
-            airlines[airline].voters.push(msg.sender);
-            if (
-                // Registration of fifth and subsequent airlines requires multi-party consensus of 50% of registered airlines
-                airlines[airline].voters.length >= registeredAirlineCount.div(2)
-            ) {
-                airlines[airline].isRegistered = true;
-            }
+            // airlines[airline].voters.push(msg.sender);
+            // if (
+            //     // Registration of fifth and subsequent airlines requires multi-party consensus of 50% of registered airlines
+            //     airlines[airline].voters.length >= registeredAirlineCount.div(2)
+            // ) {
+            //     airlines[airline].isRegistered = true;
+            // }
         } else {
             airlines[airline].isRegistered = true;
             airlines[airline].name = name;
-            registeredAirlineCount = registeredAirlineCount.add(1);
+            // registeredAirlineCount = registeredAirlineCount.add(1);
         }
     }
 
@@ -227,11 +231,12 @@ contract FlightSuretyData {
         address passengerAddress,
         string memory flight,
         uint256 timestamp
-    ) external payable checkIfPassengerHasAbove1ETH {
+    ) external
+    checkIfPassengerHasAbove1ETH 
+     payable 
+     {
         bytes32 flightKey = getFlightKey(passengerAddress, flight, timestamp);
-        //New passenger
 
-        //Existing passenger
         if (
             passengers[passengerAddress].insuredFlights[uint256(flightKey)] == 0
         ) {
@@ -246,6 +251,8 @@ contract FlightSuretyData {
             ] = msg.value;
             passengers[passengerAddress].balance = 0;
         }
+
+        emit InsuranceBought(passengerAddress);
     }
 
     /**
@@ -277,7 +284,8 @@ contract FlightSuretyData {
     {
         uint256 passengerCredit = passengers[msg.sender].balance;
         passengers[msg.sender].balance = 0;
-        payable(msg.sender).transfer(passengerCredit);
+        address payable towner = payable(msg.sender);
+        towner.transfer(passengerCredit);
     }
 
     /**

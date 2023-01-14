@@ -35,24 +35,30 @@ export default class Contract {
 
   isOperational(callback) {
     let self = this;
-    self.flightSuretyApp.methods.requireIsOperational().call({ from: self.owner }, callback);
+    self.flightSuretyApp.methods
+      .requireIsOperational()
+      .call({ gas: 50000, from: self.owner }, callback);
   }
 
-  buyInsurance(flight, callback) {
-    console.log("-ds-dss this.airlines", this.airlines)
-    console.log("this.passengers", this.passengers)
+  async buyInsurance(flight, callback) {
     let self = this;
     let payload = {
       airline: self.airlines[0],
       flight: flight,
       timestamp: Math.floor(Date.now() / 1000),
     };
-    self.flightSuretyData.methods
-      .buy(payload.airline, payload.flight, payload.timestamp)
-      .send({ from: self.owner }, (error, result) => {
+    self.flightSuretyData.methods.buy(payload.airline, payload.flight, payload.timestamp).send(
+      {
+        from: this.owner,
+        gas: 50000,
+        value: this.web3.utils.toWei("1", "ether"),
+      },
+      (error, result) => {
         if (error) console.log(error.message);
         callback(error, payload);
-      });
+        console.log("transaction hash", result);
+      }
+    );
   }
   fetchFlightStatus(flight, callback) {
     let self = this;
