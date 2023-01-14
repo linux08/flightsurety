@@ -1,7 +1,9 @@
 var Test = require("../config/testConfig.js");
 var BigNumber = require("bignumber.js");
+const Config = require("../src/dapp/config.json");
+const Web3 = require("web3");
 
-
+this.web3 = new Web3(new Web3.providers.HttpProvider(config.url));
 
 contract("Flight Surety Tests", async (accounts) => {
   var config;
@@ -64,16 +66,52 @@ contract("Flight Surety Tests", async (accounts) => {
     await config.flightSuretyData.setOperatingStatus(true);
   });
 
-  it("(airline) cannot register an Airline using registerAirline() if it is not funded", async () => {
+  it.only("(airline) cannot register an Airline using registerAirline() if it is not funded", async () => {
+    // ARRANGE
+    let newAirline = accounts[2];
+    let result = false;
+
+    console.log("NewAirline", newAirline);
+
+    console.log("fffrome", config.firstAirline);
+
+    // ACT
+    try {
+      await config.flightSuretyApp.registerAirline(newAirline, {
+        // gas: 50000,
+        //     gas: '220000',
+        // gasPrice: '21000',
+        from: config.firstAirline,
+        value: this.web3.utils.toWei("10", "ether"),
+      });
+      result = await config.flightSuretyData.isAirlineRegistered.call(newAirline);
+      console.log("transaction hash", result);
+    } catch (e) {
+      console.log("error", e);
+      console.log(e.message);
+      result = false;
+    }
+
+    // ASSERT
+    assert.equal(
+      result,
+      false,
+      "Airline should not be able to register another airline if it hasn't provided funding"
+    );
+  });
+
+  it("(airline) can buy insurance", async () => {
     // ARRANGE
     let newAirline = accounts[2];
     let result = false;
 
     // ACT
     try {
-      await config.flightSuretyApp.registerAirline(newAirline, { gas: 50000, from: config.firstAirline });
+      await config.flightSuretyApp.registerAirline(newAirline, {
+        gas: 50000,
+        from: config.firstAirline,
+      });
       result = await config.flightSuretyData.isAirlineRegistered.call(newAirline);
-      
     } catch (e) {
       console.log(e.message);
       result = false;
