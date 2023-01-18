@@ -50,34 +50,37 @@ REGISTRATION_FEE()
       {
         fromBlock: await web3.eth.getBlockNumber(),
       },
-      (err, event) => subscribeToEvent(err, event)
+      (err, event) => getEvent(err, event)
     );
 
-    // Subscribe to OracleRequest event and respond with all oracles available
     flightSuretyApp.events.OracleRequest(
       {
         fromBlock: await web3.eth.getBlockNumber(),
       },
-      (err, event) => subscribeToEvent(err, event)
+      (err, event) => getEvent(err, event)
     );
   });
 
-const subscribeToEvent = async (error, event) => {
-  let { airline, flight, flightTimestamp, index } = event.returnValues;
+const getEvent = async (error, event) => {
+  try {
+    let { airline, flight, flightTimestamp, index } = event.returnValues;
 
-  for (let i = 0; i < 20; i++) {
-    let rand = Math.floor(Math.random() * 10);
-    let account = web3.utils.toChecksumAddress(web3.eth.accounts[rand]);
-    let indices = await getMyIndexes().call({
-      from: account,
-    });
-    if (indices.includes(index)) {
-      let selection = Math.floor(Math.random() * 4);
-
-      await submitOracleResponse(airline, flight, flightTimestamp, selection).send({
+    for (let i = 0; i < 20; i++) {
+      let rand = Math.floor(Math.random() * 10);
+      let account = web3.utils.toChecksumAddress(web3.eth.accounts[rand]);
+      let indexes = await getMyIndexes().call({
         from: account,
       });
+      if (indexes.includes(index)) {
+        let selection = Math.floor(Math.random() * 4);
+
+        await submitOracleResponse(airline, flight, flightTimestamp, selection).send({
+          from: account,
+        });
+      }
     }
+  } catch (err) {
+    console.log(err);
   }
 };
 
