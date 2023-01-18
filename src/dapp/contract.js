@@ -47,18 +47,24 @@ export default class Contract {
       flight: flight,
       timestamp: Math.floor(Date.now() / 1000),
     };
+
+    await self.flightSuretyData.methods.authoriseContract(this.owner);
+
+    await self.flightSuretyData.methods.fund();
     self.flightSuretyData.methods
       .buyInsurance(payload.airline, payload.flight, payload.timestamp)
       .send(
         {
           from: this.owner,
-          gas: 50000,
-          value: this.web3.utils.toWei("1", "ether"),
         },
         (error, result) => {
-          if (error) console.log(error.message);
+          if (error) {
+            console.log(error.message);
+            alert("Transaction failed");
+          }
           callback(error, payload);
           console.log("transaction hash", result);
+          alert("Successfully purchase insurance");
         }
       );
   }
@@ -72,7 +78,11 @@ export default class Contract {
     self.flightSuretyApp.methods
       .fetchFlightStatus(payload.airline, payload.flight, payload.timestamp)
       .send({ from: self.owner }, (error, result) => {
+        if(error){
+          return console.log(error.message)
+        }
         callback(error, payload);
+        console.log('result',result);
       });
   }
 }

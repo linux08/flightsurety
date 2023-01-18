@@ -30,14 +30,13 @@ contract FlightSuretyData {
 
     struct Passenger {
         address passengerAddress;
-        // uint256[] 
-        bytes32 flightKey;
-        mapping (flightKey => bytes32) insuredFlights;
         uint256 balance;
+        mapping(bytes32 => uint256) insuredFlights;
     }
     address[] public passengersAddreses;
     mapping(address => Passenger) private passengers; // mapping for storing airlines
 
+    uint256 bankBalance = 0;
     bool private operational = true;
 
     /********************************************************************************************/
@@ -195,9 +194,6 @@ contract FlightSuretyData {
      *           // checkIfAirlineHasFunds(airline)
      */
 
-             // requireIsOperational
-        // allowOnlyUnRegisteredAirline(airline)
-        // isCallerAuthorised
     function registerAirline(address airline, string memory name)
         external
         requireIsOperational
@@ -235,28 +231,30 @@ contract FlightSuretyData {
         address passengerAddress,
         string memory flight,
         uint256 timestamp
-    ) external
-    // checkIfPassengerHasAbove1ETH(passengerAddress) 
-     payable 
-     {
+    ) external payable checkIfPassengerHasAbove1ETH(passengerAddress) {
         bytes32 flightKey = getFlightKey(passengerAddress, flight, timestamp);
+        // uint256 passengerBalance = passengers[passengerAddress].balance;
 
-        if (
-            passengers[passengerAddress].insuredFlights[uint256(flightKey)] == 0
-        ) {
-
+        if (passengers[passengerAddress].insuredFlights[flightKey] == 0) {
             passengers[passengerAddress].insuredFlights[
-                uint256(flightKey)
-            ] =   INSURANCE_POLICY_FEE; //msg.value;
-        } 
-        // else {
-            // passengersAddreses.push(passengerAddress);
-            // passengers[passengerAddress].passengerAddress = passengerAddress;
-            // passengers[passengerAddress].insuredFlights[
-            //     uint256(flightKey)
-            // ] = msg.value;
-            // passengers[passengerAddress].balance = 0;
-        // }
+                flightKey
+            ] = INSURANCE_POLICY_FEE;
+
+            // passengers[passengerAddress].balance =
+            //     passengerBalance -
+            //     INSURANCE_POLICY_FEE;
+            bankBalance = bankBalance.add(INSURANCE_POLICY_FEE);
+        } else {
+            passengersAddreses.push(passengerAddress);
+            passengers[passengerAddress].passengerAddress = passengerAddress;
+            passengers[passengerAddress].insuredFlights[
+                flightKey
+            ] = INSURANCE_POLICY_FEE;
+            // passengers[passengerAddress].balance =
+            //     passengerBalance -
+            //     INSURANCE_POLICY_FEE;
+            bankBalance = bankBalance.add(INSURANCE_POLICY_FEE);
+        }
 
         emit InsuranceBought(passengerAddress);
     }
@@ -273,12 +271,17 @@ contract FlightSuretyData {
 
         for (uint256 i = 0; i <= passengersAddreses.length; i++) {
             address pAddress = passengersAddreses[i];
-            passengers[pAddress].insuredFlights[uint256(flightKey)] = 0;
+            passengers[pAddress].insuredFlights[flightKey] = 0;
+            uint256 HALF_INSURANCE_POLICY_FEE = 1 ether;
+            bankBalance = bankBalance.sub(HALF_INSURANCE_POLICY_FEE);
+            passengers[pAddress].balance = passengers[pAddress].balance.add(
+                INSURANCE_POLICY_FEE.add(INSURANCE_POLICY_FEE.div(2))
+            );
         }
     }
 
     /**
-     *  @dev Transfers eligible payout funds to insuree
+     *  @dev Payout
      *
      */
     function pay()
@@ -299,12 +302,7 @@ contract FlightSuretyData {
      *      resulting in insurance payouts, the contract should be self-sustaining
      *
      */
-    function fund()
-        public
-        payable
-        requireIsOperational
-        isCallerAuthorised
-    {
+    function fund() public payable requireIsOperational isCallerAuthorised {
         funds[msg.sender] = funds[msg.sender].add(msg.value);
     }
 

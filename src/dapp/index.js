@@ -45,11 +45,11 @@ import "./flightsurety.css";
         });
       });
 
-      // purchase insurance
+      // Flight status update
       DOM.elid("flight-status-update").addEventListener("click", () => {
         let flight = DOM.elid("flight-upnumber").value;
         // Write transaction
-        contract.buyInsurance(flight, (error, result) => {
+        contract.fetchFlightStatus(flight, (error, result) => {
           display("Oracles", "flight update", [
             {
               label: "Flight update",

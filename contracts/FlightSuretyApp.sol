@@ -171,12 +171,6 @@ contract FlightSuretyApp {
         oracleResponses[key].requester = msg.sender;
         oracleResponses[key].isOpen = true;
 
-        //  ResponseInfo({
-        //     requester: msg.sender,
-        //     isOpen: true
-        //     // responses: [msg.sender]
-        // });
-
         emit OracleRequest(index, airline, flight, timestamp);
     }
 

@@ -119,7 +119,7 @@ contract("Flight Surety Tests", async (accounts) => {
     assert.equal(result, true, "Airline should be able to register with enough funding");
   });
 
-  it.only("(airline) can buy insurance", async () => {
+  it("(airline) can buy insurance", async () => {
     let result = false;
 
     // ACT
@@ -132,16 +132,10 @@ contract("Flight Surety Tests", async (accounts) => {
         owner,
         "name7777",
         Math.floor(Date.now() / 1000),
-        // {
-        //   // gas: 50000,
-        //   // value:  10 ** 19 ,
-        //   // from: owner, //config.firstAirline,
-        // }
       );
-
-      console.log("res", res);
-
-      // result = await config.flightSuretyData.isAirlineRegistered.call(newAirline);
+      if(res.tx){
+        result = true;
+      }
     } catch (e) {
       console.log(e.message);
       result = false;

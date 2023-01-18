@@ -8,7 +8,6 @@ contract("Oracles", async (accounts) => {
   const TEST_ORACLES_COUNT = 20;
   var config;
 
- 
   before("setup contract", async () => {
     config = await Test.Config(accounts);
 
@@ -37,9 +36,12 @@ contract("Oracles", async (accounts) => {
       await config.flightSuretyApp.registerOracle({
         from: account,
         value: fee,
-        gas: 500000,
+        // gas: 50000,
       });
-      let result = await config.flightSuretyApp.getMyIndexes.call({ gas: 50000, from: account });
+      let result = await config.flightSuretyApp.getMyIndexes.call({
+        //  gas: 50000,
+        from: account,
+      });
       console.log(`Oracle Registered: ${result[0]}, ${result[1]}, ${result[2]}`);
     }
   });
@@ -72,7 +74,7 @@ contract("Oracles", async (accounts) => {
         gas: 50000,
         from: account,
       });
-     
+
       for (let idx = 0; idx < 3; idx++) {
         try {
           // Submit a response...it will only be accepted if there is an Index match
