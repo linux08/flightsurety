@@ -30,7 +30,9 @@ contract FlightSuretyData {
 
     struct Passenger {
         address passengerAddress;
-        uint256[] insuredFlights;
+        // uint256[] 
+        bytes32 flightKey;
+        mapping (flightKey => bytes32) insuredFlights;
         uint256 balance;
     }
     address[] public passengersAddreses;
@@ -100,8 +102,8 @@ contract FlightSuretyData {
         _;
     }
 
-    modifier checkIfPassengerHasAbove1ETH() {
-        require(msg.value >= INSURANCE_POLICY_FEE, "Insufficient fund");
+    modifier checkIfPassengerHasAbove1ETH(address airline) {
+        require(funds[airline] >= INSURANCE_POLICY_FEE, "Insufficient fund");
         _;
     }
 
@@ -198,28 +200,30 @@ contract FlightSuretyData {
         // isCallerAuthorised
     function registerAirline(address airline, string memory name)
         external
-
+        requireIsOperational
+        isCallerAuthorised
+        checkIfAirlineHasFunds(airline)
     {
         if (registeredAirlineCount >= 4) {
             // Check to ensure that an airline doesn't vote multiple times
-            // for (uint256 i = 0; i < airlines[airline].voters.length; i++) {
-            //     require(
-            //         airlines[airline].voters[i] != msg.sender,
-            //         "Current Airline already approved"
-            //     );
-            // }
+            for (uint256 i = 0; i < airlines[airline].voters.length; i++) {
+                require(
+                    airlines[airline].voters[i] != msg.sender,
+                    "Current Airline already approved"
+                );
+            }
 
-            // airlines[airline].voters.push(msg.sender);
-            // if (
-            //     // Registration of fifth and subsequent airlines requires multi-party consensus of 50% of registered airlines
-            //     airlines[airline].voters.length >= registeredAirlineCount.div(2)
-            // ) {
-            //     airlines[airline].isRegistered = true;
-            // }
+            airlines[airline].voters.push(msg.sender);
+            if (
+                // Registration of fifth and subsequent airlines requires multi-party consensus of 50% of registered airlines
+                airlines[airline].voters.length >= registeredAirlineCount.div(2)
+            ) {
+                airlines[airline].isRegistered = true;
+            }
         } else {
             airlines[airline].isRegistered = true;
             airlines[airline].name = name;
-            // registeredAirlineCount = registeredAirlineCount.add(1);
+            registeredAirlineCount = registeredAirlineCount.add(1);
         }
     }
 
@@ -227,12 +231,12 @@ contract FlightSuretyData {
      * @dev Buy insurance for a flight
      *
      */
-    function buy(
+    function buyInsurance(
         address passengerAddress,
         string memory flight,
         uint256 timestamp
     ) external
-    checkIfPassengerHasAbove1ETH 
+    // checkIfPassengerHasAbove1ETH(passengerAddress) 
      payable 
      {
         bytes32 flightKey = getFlightKey(passengerAddress, flight, timestamp);
@@ -240,17 +244,19 @@ contract FlightSuretyData {
         if (
             passengers[passengerAddress].insuredFlights[uint256(flightKey)] == 0
         ) {
+
             passengers[passengerAddress].insuredFlights[
                 uint256(flightKey)
-            ] = msg.value;
-        } else {
-            passengersAddreses.push(passengerAddress);
-            passengers[passengerAddress].passengerAddress = passengerAddress;
-            passengers[passengerAddress].insuredFlights[
-                uint256(flightKey)
-            ] = msg.value;
-            passengers[passengerAddress].balance = 0;
-        }
+            ] =   INSURANCE_POLICY_FEE; //msg.value;
+        } 
+        // else {
+            // passengersAddreses.push(passengerAddress);
+            // passengers[passengerAddress].passengerAddress = passengerAddress;
+            // passengers[passengerAddress].insuredFlights[
+            //     uint256(flightKey)
+            // ] = msg.value;
+            // passengers[passengerAddress].balance = 0;
+        // }
 
         emit InsuranceBought(passengerAddress);
     }
@@ -298,7 +304,6 @@ contract FlightSuretyData {
         payable
         requireIsOperational
         isCallerAuthorised
-        checkIfAirlineHasFunds(msg.sender)
     {
         funds[msg.sender] = funds[msg.sender].add(msg.value);
     }

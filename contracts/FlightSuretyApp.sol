@@ -110,8 +110,8 @@ contract FlightSuretyApp {
      * @dev Add an airline to the registration queue
      *
      */
-    function registerAirline(address airline) external {
-        return flightSuretyData.registerAirline(airline);
+    function registerAirline(address airline, string memory name) external {
+        return flightSuretyData.registerAirline(airline, name);
     }
 
     /**
@@ -366,5 +366,5 @@ interface IFlightSuretyData {
 
     function setOperatingStatus(bool mode) external;
 
-    function registerAirline(address airline) external;
+    function registerAirline(address airline, string memory name) external;
 }

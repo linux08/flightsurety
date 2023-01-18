@@ -2,13 +2,18 @@ var Test = require("../config/testConfig.js");
 var BigNumber = require("bignumber.js");
 const Config = require("../src/dapp/config.json");
 const Web3 = require("web3");
+const ethers = require("ethers");
 
 this.web3 = new Web3(new Web3.providers.HttpProvider(config.url));
+
+let owner = null;
 
 contract("Flight Surety Tests", async (accounts) => {
   var config;
   before("setup contract", async () => {
     config = await Test.Config(accounts);
+    owner = config.owner;
+    // console.log("config", config);
     await config.flightSuretyData.authoriseContract(config.flightSuretyApp.address);
   });
 
@@ -66,28 +71,18 @@ contract("Flight Surety Tests", async (accounts) => {
     await config.flightSuretyData.setOperatingStatus(true);
   });
 
-  it.only("(airline) cannot register an Airline using registerAirline() if it is not funded", async () => {
-    // ARRANGE
+  it("(airline) cannot register an Airline using registerAirline() if it is not funded", async () => {
     let newAirline = accounts[2];
     let result = false;
 
-    console.log("NewAirline", newAirline);
-
-    console.log("fffrome", config.firstAirline);
-
     // ACT
     try {
-      await config.flightSuretyApp.registerAirline(newAirline, {
-        // gas: 50000,
-        //     gas: '220000',
-        // gasPrice: '21000',
+      await config.flightSuretyData.registerAirline(newAirline, "name7777", {
         from: config.firstAirline,
-        value: this.web3.utils.toWei("10", "ether"),
       });
       result = await config.flightSuretyData.isAirlineRegistered.call(newAirline);
       console.log("transaction hash", result);
     } catch (e) {
-      console.log("error", e);
       console.log(e.message);
       result = false;
     }
@@ -100,17 +95,20 @@ contract("Flight Surety Tests", async (accounts) => {
     );
   });
 
-  it("(airline) can buy insurance", async () => {
-    // ARRANGE
-    let newAirline = accounts[2];
+  it("(airline) can register airline with funding", async () => {
+    let newAirline = owner;
     let result = false;
 
     // ACT
     try {
-      await config.flightSuretyApp.registerAirline(newAirline, {
-        gas: 50000,
-        from: config.firstAirline,
+      //authorize caller
+      await config.flightSuretyData.authoriseContract(newAirline, { from: newAirline });
+
+      await config.flightSuretyData.fund({ from: owner, value: 10 ** 19 });
+      await config.flightSuretyApp.registerAirline(newAirline, "name7777", {
+        from: owner,
       });
+
       result = await config.flightSuretyData.isAirlineRegistered.call(newAirline);
     } catch (e) {
       console.log(e.message);
@@ -118,10 +116,38 @@ contract("Flight Surety Tests", async (accounts) => {
     }
 
     // ASSERT
-    assert.equal(
-      result,
-      false,
-      "Airline should not be able to register another airline if it hasn't provided funding"
-    );
+    assert.equal(result, true, "Airline should be able to register with enough funding");
+  });
+
+  it.only("(airline) can buy insurance", async () => {
+    let result = false;
+
+    // ACT
+    try {
+      //authorize caller
+      await config.flightSuretyData.authoriseContract(owner, { from: owner });
+
+      await config.flightSuretyData.fund({ from: owner, value: 10 ** 19 });
+      let res = await config.flightSuretyData.buyInsurance(
+        owner,
+        "name7777",
+        Math.floor(Date.now() / 1000),
+        // {
+        //   // gas: 50000,
+        //   // value:  10 ** 19 ,
+        //   // from: owner, //config.firstAirline,
+        // }
+      );
+
+      console.log("res", res);
+
+      // result = await config.flightSuretyData.isAirlineRegistered.call(newAirline);
+    } catch (e) {
+      console.log(e.message);
+      result = false;
+    }
+
+    // ASSERT
+    assert.equal(result, true, "Airline should be able to register with enough funding");
   });
 });

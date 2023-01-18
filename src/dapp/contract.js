@@ -47,18 +47,20 @@ export default class Contract {
       flight: flight,
       timestamp: Math.floor(Date.now() / 1000),
     };
-    self.flightSuretyData.methods.buy(payload.airline, payload.flight, payload.timestamp).send(
-      {
-        from: this.owner,
-        gas: 50000,
-        value: this.web3.utils.toWei("1", "ether"),
-      },
-      (error, result) => {
-        if (error) console.log(error.message);
-        callback(error, payload);
-        console.log("transaction hash", result);
-      }
-    );
+    self.flightSuretyData.methods
+      .buyInsurance(payload.airline, payload.flight, payload.timestamp)
+      .send(
+        {
+          from: this.owner,
+          gas: 50000,
+          value: this.web3.utils.toWei("1", "ether"),
+        },
+        (error, result) => {
+          if (error) console.log(error.message);
+          callback(error, payload);
+          console.log("transaction hash", result);
+        }
+      );
   }
   fetchFlightStatus(flight, callback) {
     let self = this;

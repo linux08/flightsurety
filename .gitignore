@@ -9,6 +9,8 @@ src/server/config.json
 /dapp/
 prod/
 
+package-lock.json
+
 # Runtime data
 pids
 *.pid
